@@ -17,6 +17,7 @@ class ProdcutScreen extends StatefulWidget {
 
 class _ProdcutScreenState extends State<ProdcutScreen> {
   List<Map<String, dynamic>> _products = [];
+  List<String> _suggestions = [];  // Store search suggestions
   bool _isLoading = false;
   bool _isLoggedIn = false; // Track login status
   TextEditingController _searchController = TextEditingController();
@@ -78,6 +79,28 @@ class _ProdcutScreenState extends State<ProdcutScreen> {
       );
       setState(() {
         _isLoading = false;
+      });
+    }
+  }
+
+  // Fetch suggestions based on search query
+  Future<void> _fetchSuggestions(String searchQuery) async {
+    try {
+      final url = 'http://localhost:5000/products?search=$searchQuery&suggest=true';
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _suggestions = List<String>.from(data['suggestions'].map((product) => product['name']));
+        });
+      } else {
+        setState(() {
+          _suggestions = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _suggestions = [];
       });
     }
   }
@@ -175,6 +198,7 @@ class _ProdcutScreenState extends State<ProdcutScreen> {
                       _searchQuery = value;
                     });
                     _fetchProducts(searchQuery: value);  // Fetch products on search
+                    _fetchSuggestions(value);  // Fetch search suggestions
                   },
                 ),
               ),
@@ -280,6 +304,25 @@ class _ProdcutScreenState extends State<ProdcutScreen> {
                   ),
                 ),
 
+                // Display search suggestions when the query is long enough
+                if (_searchQuery.isNotEmpty)
+                  ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _suggestions.length,
+                    itemBuilder: (context, index) {
+                      final suggestion = _suggestions[index];
+                      return ListTile(
+                        title: Text(suggestion),
+                        onTap: () {
+                          setState(() {
+                            _searchQuery = suggestion;
+                          });
+                          _fetchProducts(searchQuery: suggestion);  // Fetch products based on the suggestion
+                        },
+                      );
+                    },
+                  ),
+
                 LayoutBuilder(
                   builder: (context, constraints) {
                     int crossAxisCount = (constraints.maxWidth ~/ 150)
@@ -369,42 +412,6 @@ class _ProdcutScreenState extends State<ProdcutScreen> {
                                                       ),
                                                     ),
                                                   ],
-                                                ),
-                                              ),
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                if (_isLoggedIn) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text('Select the quantity to proceed item to Cart'),
-                                                    ),
-                                                  );
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) => ProductDetailsScreen(product: product),
-                                                    ),
-                                                  );
-                                                } else {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(builder: (context) => Loginscreen()),
-                                                  );
-                                                }
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-                                                backgroundColor: _isLoggedIn ? Colors.teal : Colors.teal,
-                                              ),
-                                              child: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  _isLoggedIn ? 'Add to Cart' : 'Login to Buy',
-                                                  style: TextStyle(
-                                                    fontSize: 15.0,
-                                                    color: Colors.white,
-                                                  ),
                                                 ),
                                               ),
                                             ),

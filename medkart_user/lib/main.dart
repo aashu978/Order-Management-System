@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:medkart_user/screen/loginScreen.dart';
 import 'package:medkart_user/screen/splash_screee.dart';
 
 void main() {
@@ -14,8 +13,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: SplashScreen(),
-      debugShowCheckedModeBanner: false,// Set the splash screen as the home widget
+      home: SplashScreen(), // Set SplashScreen as the initial screen
+      debugShowCheckedModeBanner: false,
     );
   }
 }

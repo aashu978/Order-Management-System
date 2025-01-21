@@ -14,6 +14,7 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> {
   List<dynamic> _products = [];
+  List<String> _suggestions = [];
   bool _isLoading = false;
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -82,6 +83,37 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
+  // Fetch suggestions from backend
+  Future<void> _fetchSuggestions(String query) async {
+    try {
+      final url = Uri.parse(
+          'http://localhost:5000/products?search=$query&limit=5&suggest=true');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _suggestions = data['suggestions']
+              .map<String>((suggestion) => suggestion['name'].toString())
+              .toList();
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _suggestions = [];
+      });
+    }
+  }
+
+  // Handling the user selecting a suggestion
+  void _onSuggestionSelected(String suggestion) {
+    _searchController.text = suggestion;
+    _searchQuery = suggestion;
+    _fetchProducts(searchQuery: suggestion);
+    setState(() {
+      _suggestions = [];
+    });
+  }
 
   void _nextPage() {
     if (_currentPage < _totalPages) {
@@ -132,7 +164,6 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,10 +202,32 @@ class _AdminScreenState extends State<AdminScreen> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) {
+                if (value.isNotEmpty) {
+                  _fetchSuggestions(value);
+                } else {
+                  setState(() {
+                    _suggestions = [];
+                  });
+                }
                 _fetchProducts(searchQuery: value);
               },
             ),
           ),
+          // Show suggestions if available
+          if (_suggestions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _suggestions.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(_suggestions[index]),
+                    onTap: () => _onSuggestionSelected(_suggestions[index]),
+                  );
+                },
+              ),
+            ),
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())

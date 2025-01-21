@@ -3,18 +3,30 @@
 import 'package:medkart_user/screen/prodcut.dart';
   import 'dart:async';
 
-  import 'Home_page.dart';
 
-  class SplashScreen extends StatelessWidget {
+  class SplashScreen extends StatefulWidget {
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+
+    @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Timer(Duration(seconds: 2 ), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ProdcutScreen()),
+      );
+    });
+  }
+
+
     @override
     Widget build(BuildContext context) {
       // Using a Timer to navigate to the HomePage after 3 seconds
-      Timer(Duration(seconds: 2 ), () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProdcutScreen()),
-        );
-      });
 
       return Scaffold(
         backgroundColor: Colors.teal,
@@ -42,4 +54,4 @@ import 'package:medkart_user/screen/prodcut.dart';
         ),
       );
     }
-  }
+}

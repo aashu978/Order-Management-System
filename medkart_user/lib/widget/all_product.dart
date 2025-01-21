@@ -13,6 +13,7 @@ class AllProduct extends StatefulWidget {
 
 class _AllProductState extends State<AllProduct> {
   List<dynamic> _products = [];
+  List<dynamic> _suggestions = [];
   bool _isLoading = false;
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -67,6 +68,9 @@ class _AllProductState extends State<AllProduct> {
           _isLoading = false;
           _totalPages = data['pages'];
         });
+
+        // Update suggestions
+        _updateSearchSuggestions(searchQuery);
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Failed to load products')));
@@ -81,6 +85,24 @@ class _AllProductState extends State<AllProduct> {
         _isLoading = false;
       });
     }
+  }
+
+  // Update search suggestions based on the input query
+  void _updateSearchSuggestions(String? query) {
+    if (query == null || query.isEmpty) {
+      setState(() {
+        _suggestions = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _suggestions = _products
+          .where((product) =>
+          product['name'].toLowerCase().contains(query.toLowerCase()))
+          .take(5) // Limit to 5 suggestions
+          .toList();
+    });
   }
 
   void _checkLoginStatus() async {
@@ -124,6 +146,24 @@ class _AllProductState extends State<AllProduct> {
               },
             ),
           ),
+          // Suggestions list
+          if (_searchController.text.isNotEmpty && _suggestions.isNotEmpty)
+            Container(
+              height: 200,
+              child: ListView.builder(
+                itemCount: _suggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = _suggestions[index];
+                  return ListTile(
+                    title: Text(suggestion['name']),
+                    onTap: () {
+                      _searchController.text = suggestion['name'];
+                      _fetchProducts(searchQuery: suggestion['name']);
+                    },
+                  );
+                },
+              ),
+            ),
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
@@ -296,7 +336,6 @@ class _AllProductState extends State<AllProduct> {
                   ),
                 ],
               ),
-
             ),
         ],
       ),
